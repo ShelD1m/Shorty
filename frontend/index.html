@@ -1,12 +1,48 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Shorty</title>
+    <title>Shorty · Вход</title>
+    <link rel="stylesheet" href="assets/css/styles.css"/>
 </head>
 <body>
-<h1>Shorty Starter</h1>
-<p>Backend runs at <code>http://localhost:8080</code>. Use curl or Swagger UI.</p>
+<div class="container">
+    <div class="card">
+        <div class="h"><h1>Shorty</h1><span class="badge">demo</span></div>
+        <p class="notice">Мини UI для проверки бэка. Сначала зарегистрируйтесь, затем войдите.</p>
+        <div class="grid-2">
+            <div>
+                <div class="label">Email</div>
+                <input id="email" class="input" placeholder="you@example.com"/>
+            </div>
+            <div>
+                <div class="label">Пароль</div>
+                <input id="password" type="password" class="input" placeholder="••••••••"/>
+            </div>
+        </div>
+        <div class="row" style="margin-top:12px;">
+            <button id="signup" class="btn secondary">Зарегистрироваться</button>
+            <button id="login" class="btn">Войти</button>
+        </div>
+        <hr/>
+        <p class="notice">После входа вы будете перенаправлены в панель управления.</p>
+    </div>
+    <footer>© Shorty • vanilla HTML/JS • <span class="tooltip">backend: localhost:8080</span></footer>
+</div>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+    const email = qs('#email'); const pass = qs('#password');
+    qs('#signup').onclick = async ()=>{
+        try { await API.auth.signup(email.value, pass.value); toast('Готово! Теперь войдите'); }
+        catch(e){ toast('Ошибка: ' + e.message); }
+    };
+    qs('#login').onclick = async ()=>{
+        try { const r = await API.auth.login(email.value, pass.value); API.token = r.accessToken; location.href = 'dashboard.html'; }
+        catch(e){ toast('Ошибка: ' + e.message); }
+    };
+</script>
 </body>
 </html>
+

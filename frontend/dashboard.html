@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ру">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Shorty · Панель</title>
+    <link rel="stylesheet" href="assets/css/styles.css"/>
+</head>
+<body>
+<div class="container">
+    <div class="h">
+        <h1>Мои ссылки</h1>
+        <div class="row">
+            <button id="logout" class="btn secondary">Выйти</button>
+        </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+        <div class="label">Целевой URL</div>
+        <input id="targetUrl" class="input" placeholder="https://example.com/long/path"/>
+        <div class="grid-2" style="margin-top:10px;">
+            <div>
+                <div class="label">Кастомный slug (необяз.)</div>
+                <input id="customSlug" class="input" placeholder="my-article"/>
+            </div>
+            <div>
+                <div class="label">Макс. кликов (необяз.)</div>
+                <input id="maxClicks" class="input" placeholder="например, 100"/>
+            </div>
+        </div>
+        <div class="row" style="margin-top:12px;">
+            <button id="create" class="btn">Создать</button>
+        </div>
+        <div id="result" class="notice" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <h3 style="margin-top:0;">Последняя созданная ссылка</h3>
+        <table class="table">
+            <thead><tr><th>Slug</th><th>Target</th><th>Переход</th><th></th></tr></thead>
+            <tbody id="links"></tbody>
+        </table>
+        <p class="notice">Полный список появится, когда добавим эндпоинт /api/links (list).</p>
+    </div>
+    <footer>© Shorty • <a href="index.html">Назад</a></footer>
+</div>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+    if (!API.token) location.href = 'index.html';
+    qs('#logout').onclick = ()=>{ API.clear(); location.href='index.html'; };
+    const linksTbody = qs('#links');
+    function renderLink(l){
+        linksTbody.innerHTML = '<tr>' +
+            '<td><span class="kbd">'+ l.slug +'</span></td>' +
+            '<td style="max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+ l.targetUrl +'</td>' +
+            '<td><a target="_blank" href="'+ API.base + l.shortUrl +'">'+ l.shortUrl +'</a></td>' +
+            '<td><a class="btn secondary" href="link.html?id='+l.id+'&slug='+l.slug+'">Статистика</a></td>' +
+            '</tr>';
+    }
+    qs('#create').onclick = async ()=>{
+        const payload = {
+            targetUrl: qs('#targetUrl').value,
+            customSlug: qs('#customSlug').value || null,
+            expiresAt: null,
+            maxClicks: qs('#maxClicks').value ? parseInt(qs('#maxClicks').value,10) : null
+        };
+        try {
+            const l = await API.links.create(payload);
+            qs('#result').textContent = 'Создано: ' + l.shortUrl;
+            renderLink(l);
+        } catch(e){ toast('Ошибка: ' + e.message); }
+    };
+</script>
+</body>
+</html>
+
