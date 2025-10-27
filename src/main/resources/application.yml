@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5450/shorty
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.batch_size: 100
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+app:
+  baseUrl: "http://localhost:8080"
+  jwt:
+    secret: "dev-secret-change-please-dev-secret-change-please"
+    ttlSec: 3600
