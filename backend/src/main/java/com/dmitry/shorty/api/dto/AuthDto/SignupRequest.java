@@ -1,4 +1,4 @@
-package com.dmitry.shorty.api.dto;
+package com.dmitry.shorty.api.dto.AuthDto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
