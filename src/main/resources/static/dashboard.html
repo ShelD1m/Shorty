@@ -27,7 +27,7 @@
     <div class="card">
         <h3 style="margin-top:0;">Последняя созданная ссылка</h3>
         <table class="table">
-            <thead><tr><th>Slug</th><th>Target</th><th>Переход</th><th></th></tr></thead>
+            <thead><tr><th>Slug</th><th>Target</th><th>Переход</th><th>Кликов</th><th></th></tr></thead>
             <tbody id="links"></tbody>
         </table>
         <p class="notice">Полный список — на главной.</p>
@@ -47,8 +47,10 @@
             '<td><span class="kbd">'+ l.slug +'</span></td>' +
             '<td style="max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+ l.targetUrl +'</td>' +
             '<td><a target="_blank" href="'+ API.base() + l.shortUrl +'">'+ l.shortUrl +'</a></td>' +
+            '<td>'+ (l.clicksCount ?? 0) +'</td>' +
             '<td><a class="btn secondary" href="link.html?id='+l.id+'&slug='+l.slug+'">Статистика</a></td>' +
             '</tr>';
+
     }
 
     document.querySelector('#create').onclick = async ()=> {

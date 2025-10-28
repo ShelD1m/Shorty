@@ -89,10 +89,12 @@
 
             li.innerHTML =
                 '<div class="row">' +
-                '<strong>' + shortUrl + '</strong>' +
+                '<strong><a target="_blank" href="' + shortUrl + '">' + shortUrl + '</a></strong>' +
                 '<button class="copy" data-copy="' + shortUrl + '">копировать</button>' +
                 '</div>' +
-                '<div class="muted">→ ' + (it.targetUrl || it.longUrl || '') + '</div>';
+                '<div class="muted">→ ' + (it.targetUrl || it.longUrl || '') + '</div>' +
+                '<div class="s muted">Кликов: ' + (it.clicksCount ?? 0) + '</div>';
+
 
             list.appendChild(li);
         });

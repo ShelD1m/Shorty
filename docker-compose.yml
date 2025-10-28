@@ -1,22 +1,43 @@
-version: '3.8' # Рекомендуется использовать актуальную версию
+version: "3.8"
 
 services:
-  db:
-    image: postgres:15
-    container_name: shorty_postgres_db # Опционально: более понятное имя контейнера
-    environment:
-      POSTGRES_DB: shorty
-      POSTGRES_USER: postgres # Внимание: лучше использовать shorty_user
-      POSTGRES_PASSWORD: postgres # Внимание: лучше использовать более сложный пароль
+  app:
+    build:
+      context: .               # ВАЖНО: здесь лежат pom.xml, src, Dockerfile
+      dockerfile: Dockerfile
+    container_name: shorty_app
     ports:
-      - "5450:5432" # Маппинг порта: 5450 на хосте к 5432 в контейнере
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: "put-strong-secret-here"   # замени на свой
+    depends_on:
+      - db
+      - redis
     volumes:
-      - shorty_pg:/var/lib/postgresql/data
-    healthcheck: # Добавлен healthcheck для большей надежности запуска
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - ./logs:/app/logs       # опционально — логи на хост
+
+  db:
+    image: postgres:16
+    container_name: shorty_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shorty
+    ports:
+      - "5450:5432"            # доступ из IDE: jdbc:postgresql://localhost:5450/shorty
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: shorty_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
 
 volumes:
-  shorty_pg:
+  db_data:
+  redis_data:
