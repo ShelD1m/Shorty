@@ -1,19 +1,19 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5450/shorty # Используем 5450, как в docker-compose
-    username: postgres # Пользователь shorty
-    password: postgres # Пароль shorty
-    driver-class-name: org.postgresql.Driver # Явно указываем драйвер, хотя Spring Boot часто сам его определяет
+    url: jdbc:postgresql://localhost:5450/shorty
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate.jdbc.batch_size: 100
-    show-sql: true # Полезно для отладки
-    database-platform: org.hibernate.dialect.PostgreSQLDialect # Указываем диалект
+    show-sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     locations: classpath:db/migration
-    enabled: true # Убедись, что Flyway включен
+    enabled: true
 
 server:
   port: 8080
@@ -24,9 +24,14 @@ jwt:
 
 logging:
   level:
-    root: INFO # Обычно для production лучше INFO
-    org.springframework: DEBUG
-    com.dmitry.shorty: DEBUG
-    org.hibernate.SQL: DEBUG # Полезно для отладки JPA/Hibernate
+    root: INFO
+    org.springframework: INFO
+    com.dmitry.shorty: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: INFO
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+  file:
+    name: logs/application.log
 
-debug: true
+debug: false

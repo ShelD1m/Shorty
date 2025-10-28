@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.util.List;
 import java.util.Random;
 
 @RestController @RequestMapping("/api/links")
@@ -16,7 +17,7 @@ public class LinkController {
 
     @PostMapping
     public ResponseEntity<LinkResponse> create(@Valid @RequestBody CreateLinkRequest req, Principal principal){
-        Long userId = Long.valueOf(principal.getName()); // userId in JWT subject
+        Long userId = Long.valueOf(principal.getName());
         String slug = (req.customSlug()!=null && !req.customSlug().isBlank()) ? req.customSlug() : genSlug();
         if (links.existsBySlug(slug)) return ResponseEntity.badRequest().build();
 
@@ -55,4 +56,17 @@ public class LinkController {
             if(!links.existsBySlug(s)) return s;
         }
     }
+    @GetMapping("/me")
+    public ResponseEntity<List<LinkResponse>> myLinks(Principal p) {
+        Long userId = Long.valueOf(p.getName());
+        var list = links.findAll().stream()
+                .filter(l -> l.getUserId().equals(userId))
+                .map(l -> new LinkResponse(
+                        l.getId(), l.getSlug(), "/r/" + l.getSlug(), l.getTargetUrl(),
+                        l.getIsActive(), l.getExpiresAt(), l.getMaxClicks(), l.getClicksCount()
+                ))
+                .toList();
+        return ResponseEntity.ok(list);
+    }
+
 }

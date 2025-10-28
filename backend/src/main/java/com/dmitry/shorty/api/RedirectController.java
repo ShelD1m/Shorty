@@ -14,6 +14,9 @@ public class RedirectController {
     public Object go(@PathVariable String slug){
         var l = links.findBySlug(slug).orElse(null);
         if (l==null || !l.getIsActive()) return ResponseEntity.notFound().build();
+        l.setClicksCount(l.getClicksCount() + 1);
+        links.save(l);
         return new RedirectView(l.getTargetUrl());
     }
+
 }

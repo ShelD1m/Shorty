@@ -22,11 +22,8 @@ public class TokenService {
             @Value("${jwt.secret:}") String secretFromProps,
             @Value("${jwt.expiration-seconds:3600}") long expirationSeconds
     ) {
-        // 1) Пытаемся взять из application.yml (jwt.secret)
         String resolved = trimToNull(secretFromProps);
-        // 2) Если нет — из ENV переменной JWT_SECRET
         if (resolved == null) resolved = trimToNull(System.getenv("JWT_SECRET"));
-        // 3) Если нет — из JVM флага -Djwt.secret=...
         if (resolved == null) resolved = trimToNull(System.getProperty("jwt.secret"));
 
         if (resolved == null) {
