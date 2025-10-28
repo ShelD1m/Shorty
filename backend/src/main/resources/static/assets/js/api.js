@@ -12,7 +12,6 @@ const API = (()=>{
             try { const txt = await res.text(); if (txt) msg = txt; } catch {}
             throw new Error(msg);
         }
-        // на health может прийти не-JSON — попробуем
         const ct = res.headers.get('content-type') || '';
         return ct.includes('application/json') ? res.json() : res.text();
     };

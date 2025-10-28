@@ -23,3 +23,9 @@ dialog::backdrop{ background: rgba(0,0,0,5); }
 .table{ width:100%; border-collapse: collapse; }
 .table th, .table td{ border-bottom:1px dashed #263042; padding:8px; text-align:left; }
 .notice{ color:var(--muted); }
+.hidden { display: none !important; }
+dialog { border: none; border-radius: 16px; padding: 16px; background: var(--card); color: var(--text); }
+dialog[open] { display: block; }
+dialog::backdrop { background: rgba(0,0,0,.5); }
+.backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
+.hidden { display: none !important; }
