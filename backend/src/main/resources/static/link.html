@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Shorty — ссылка</title>
+    <link rel="stylesheet" href="assets/css/styles.css"/>
+</head>
+<body>
+<header class="container">
+    <h1>Детали ссылки</h1>
+    <nav><a class="ghost" href="dashboard.html">Панель</a></nav>
+</header>
+
+<main class="container">
+    <section class="card">
+        <div id="info" class="muted">Загрузка…</div>
+    </section>
+</main>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/api.js"></script>
+<script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+
+    async function load() {
+        if (!id) { document.querySelector('#info').textContent = 'Не указан id'; return; }
+        try {
+            const l = await API.links.get(id);
+            document.querySelector('#info').innerHTML =
+                '<div class="row"><strong>Короткая:</strong> <a target="_blank" href="'+ API.base() + l.shortUrl +'">'+ l.shortUrl +'</a></div>' +
+                '<div class="row"><strong>Target:</strong> '+ l.targetUrl +'</div>' +
+                '<div class="row"><strong>Slug:</strong> '+ l.slug +'</div>' +
+                '<div class="row"><strong>Кликов:</strong> '+ l.clicksCount +'</div>';
+        } catch (e) {
+            document.querySelector('#info').textContent = 'Не удалось получить ссылку';
+        }
+    }
+    load();
+</script>
+</body>
+</html>

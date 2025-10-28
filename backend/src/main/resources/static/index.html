@@ -15,18 +15,16 @@
     </nav>
 </header>
 
-
 <main class="container">
     <section class="card">
         <h2>Сократить ссылку</h2>
         <form id="form-shorten">
             <input id="longUrl" type="url" placeholder="Вставьте длинный URL" required />
-            <input id="alias" type="text" placeholder="Алиас (опц.)" />
+            <input id="alias" type="text" placeholder="Кастомный slug (опц.)" />
             <button type="submit">Сократить</button>
         </form>
         <div id="shortResult" class="muted"></div>
     </section>
-
 
     <section class="card">
         <h2>Мои ссылки</h2>
@@ -34,7 +32,6 @@
         <ul id="links-list" class="list"></ul>
     </section>
 </main>
-
 
 <dialog id="dlg-login">
     <form method="dialog" id="form-login" class="dialog-card">
@@ -50,7 +47,6 @@
     </form>
 </dialog>
 
-
 <dialog id="dlg-register">
     <form method="dialog" id="form-register" class="dialog-card">
         <h3>Регистрация</h3>
@@ -64,8 +60,8 @@
     </form>
 </dialog>
 
-
 <script src="./assets/js/config.js"></script>
+<script src="./assets/js/ui.js"></script>
 <script src="./assets/js/api.js"></script>
 <script src="./assets/js/app.js"></script>
 </body>
