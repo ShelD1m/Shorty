@@ -1,6 +1,5 @@
 package com.dmitry.shorty.api;
 
-import com.dmitry.shorty.api.dto.*;
 import com.dmitry.shorty.api.dto.LinkDto.CreateLinkRequest;
 import com.dmitry.shorty.api.dto.LinkDto.LinkResponse;
 import com.dmitry.shorty.link.*;

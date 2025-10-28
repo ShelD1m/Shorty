@@ -6,7 +6,7 @@ services:
       POSTGRES_DB: shorty
       POSTGRES_USER: shorty
       POSTGRES_PASSWORD: shorty
-    ports: ["5432:5432"]
+    ports: ["5450:5432"]
     volumes: [dbdata:/var/lib/postgresql/data]
 volumes:
   dbdata:

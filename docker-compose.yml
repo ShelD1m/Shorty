@@ -1,12 +1,22 @@
-version: "3.9"
+version: '3.8' # Рекомендуется использовать актуальную версию
+
 services:
   db:
-    image: postgres:16
+    image: postgres:15
+    container_name: shorty_postgres_db # Опционально: более понятное имя контейнера
     environment:
       POSTGRES_DB: shorty
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports: ["5450:5432"]
-    volumes: [dbdata:/var/lib/postgresql/data]
+      POSTGRES_USER: postgres # Внимание: лучше использовать shorty_user
+      POSTGRES_PASSWORD: postgres # Внимание: лучше использовать более сложный пароль
+    ports:
+      - "5450:5432" # Маппинг порта: 5450 на хосте к 5432 в контейнере
+    volumes:
+      - shorty_pg:/var/lib/postgresql/data
+    healthcheck: # Добавлен healthcheck для большей надежности запуска
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
-  dbdata:
+  shorty_pg:

@@ -1,40 +1,76 @@
 package com.dmitry.shorty.security;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.util.Date;
-import javax.crypto.SecretKey;
+import java.util.Optional;
 
 @Service
 public class TokenService {
-    private final SecretKey key;
-    private final long ttlMs;
+    private final byte[] secret;
+    private final long expirationSeconds;
 
-    public TokenService(@Value("${app.jwt.secret}") String secret,
-                        @Value("${app.jwt.ttlSec}") long ttlSec) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.ttlMs = ttlSec * 1000;
+    public TokenService(
+            @Value("${jwt.secret:}") String secretFromProps,
+            @Value("${jwt.expiration-seconds:3600}") long expirationSeconds
+    ) {
+        // 1) Пытаемся взять из application.yml (jwt.secret)
+        String resolved = trimToNull(secretFromProps);
+        // 2) Если нет — из ENV переменной JWT_SECRET
+        if (resolved == null) resolved = trimToNull(System.getenv("JWT_SECRET"));
+        // 3) Если нет — из JVM флага -Djwt.secret=...
+        if (resolved == null) resolved = trimToNull(System.getProperty("jwt.secret"));
+
+        if (resolved == null) {
+            throw new IllegalArgumentException(
+                    "jwt.secret is not configured. " +
+                            "Set one of: application.yml (jwt.secret), ENV JWT_SECRET, or JVM -Djwt.secret=..."
+            );
+        }
+        this.secret = resolved.getBytes();
+        this.expirationSeconds = expirationSeconds;
     }
 
-    public String issue(Long userId, String role) {
-        long now = System.currentTimeMillis();
-        return Jwts.builder()
-                .setSubject(userId.toString())
-                .claim("scope", role)
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + ttlMs))
-                .signWith(key)
-                .compact();
+    private static String trimToNull(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        return s.isEmpty() ? null : s;
     }
 
-    public TokenUser parse(String token) {
-        var jws = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-        Long uid = Long.valueOf(jws.getBody().getSubject());
-        String role = (String) jws.getBody().get("scope");
-        return new TokenUser(uid, role);
+    public String generate(String subject) {
+        try {
+            Instant now = Instant.now();
+            JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                    .subject(subject)
+                    .issueTime(Date.from(now))
+                    .expirationTime(Date.from(now.plusSeconds(expirationSeconds)))
+                    .build();
+            JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
+            SignedJWT jwt = new SignedJWT(header, claims);
+            JWSSigner signer = new MACSigner(secret);
+            jwt.sign(signer);
+            return jwt.serialize();
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot sign JWT", e);
+        }
     }
 
-    public record TokenUser(Long id, String role) {}
+    public Optional<String> parseSubject(String token) {
+        try {
+            SignedJWT jwt = SignedJWT.parse(token);
+            Date exp = jwt.getJWTClaimsSet().getExpirationTime();
+            if (exp != null && exp.before(new Date())) return Optional.empty();
+            return Optional.ofNullable(jwt.getJWTClaimsSet().getSubject());
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
 }
