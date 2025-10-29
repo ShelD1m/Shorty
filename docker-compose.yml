@@ -3,19 +3,19 @@ version: "3.8"
 services:
   app:
     build:
-      context: .               # ВАЖНО: здесь лежат pom.xml, src, Dockerfile
+      context: .
       dockerfile: Dockerfile
     container_name: shorty_app
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      JWT_SECRET: "put-strong-secret-here"   # замени на свой
+      JWT_SECRET: "7x!A%D*G-KaPdSgVkYp3s6v9y$B?E(H+MbQeThWmZq4t7w!z%C*F-J@NcRfUjXn2r"
     depends_on:
       - db
       - redis
     volumes:
-      - ./logs:/app/logs       # опционально — логи на хост
+      - ./logs:/app/logs
 
   db:
     image: postgres:16
@@ -25,7 +25,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: shorty
     ports:
-      - "5450:5432"            # доступ из IDE: jdbc:postgresql://localhost:5450/shorty
+      - "5450:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 

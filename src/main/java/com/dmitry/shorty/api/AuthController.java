@@ -20,22 +20,23 @@ public class AuthController {
     }
 
     @PostMapping(value = "/login", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
         try {
             AuthResponse authResponse = authService.login(req);
             return ResponseEntity.ok(authResponse);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("{\"error\":\"Invalid credentials\"}");
         }
     }
 
-    @PostMapping(value = "/register", consumes = "application/json")
-    public ResponseEntity<Void> register(@Valid @RequestBody SignupRequest req) {
+    @PostMapping(value = "/register", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> register(@Valid @RequestBody SignupRequest req) {
         try {
             authService.signup(req);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            return ResponseEntity.status(HttpStatus.CREATED).body("{\"status\":\"created\"}");
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("{\"error\":\"Email already registered\"}");
         }
     }
 }

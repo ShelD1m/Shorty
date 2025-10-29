@@ -1,69 +1,61 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Shorty — сокращатель ссылок</title>
-    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Shorty — Кабинет</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <style>
+        body{margin:0;background:#0f172a;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}
+        .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+        .top{display:flex;align-items:center;gap:12px}
+        .brand{font-size:40px;font-weight:800;margin:0}
+        .btn{background:#22c55e;color:#fff;border:0;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+        .card{background:#111827;border-radius:16px;padding:20px 20px;margin-top:18px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+        h2{margin:0 0 12px 0;color:#fff}
+        input{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#0b1220;color:#e5e7eb}
+        .row{display:grid;grid-template-columns:1fr 320px 140px;gap:12px}
+        .muted{color:#94a3b8}
+        /* список ссылок */
+        #links-list{list-style:none;margin:0;padding:0}
+        .item{display:grid;grid-template-columns:1fr 1fr auto auto; /* короткая | исходная | счётчик | копия */
+            gap:12px;align-items:center;padding:14px 0;border-bottom:1px dashed #334155}
+        .short a{color:#60a5fa;word-break:break-all}
+        .target{color:#94a3b8;word-break:break-all}
+        .clicks{white-space:nowrap;color:#cbd5e1}
+        .copy-right{text-align:right}
+        .hidden{display:none!important}
+        #toast{position:fixed;right:16px;bottom:16px;background:#22c55e;color:#fff;padding:8px 14px;border-radius:10px;opacity:0;transition:.25s}
+    </style>
 </head>
 <body>
-<header class="container">
-    <h1>Shorty</h1>
-    <nav>
-        <button id="btn-login" class="ghost">Войти</button>
-        <button id="btn-logout" class="ghost hidden">Выйти</button>
-    </nav>
-</header>
+<div class="wrap">
+    <div class="top">
+        <h1 class="brand">Shorty</h1>
+        <button id="btn-logout" class="btn">Выйти</button>
+    </div>
 
-<main class="container">
-    <section class="card">
+    <div class="card">
         <h2>Сократить ссылку</h2>
-        <form id="form-shorten">
-            <input id="longUrl" type="url" placeholder="Вставьте длинный URL" required />
-            <input id="alias" type="text" placeholder="Кастомный slug (опц.)" />
-            <button type="submit">Сократить</button>
-        </form>
-        <div id="shortResult" class="muted"></div>
-    </section>
-
-    <section class="card">
-        <h2>Мои ссылки <span id="links-count" class="muted s">(0)</span></h2>
-        <div id="links-empty" class="muted">Пока пусто. Создайте первую ссылку ↑</div>
-        <ul id="links-list" class="list"></ul>
-    </section>
-</main>
-
-<dialog id="dlg-login">
-    <form method="dialog" id="form-login" class="dialog-card">
-        <h3>Войти</h3>
-        <input id="login-email" type="email" placeholder="Email" required />
-        <input id="login-pass" type="password" placeholder="Пароль" required />
         <div class="row">
-            <button value="cancel" class="ghost">Отмена</button>
-            <button id="btn-do-login" value="login">Войти</button>
+            <input id="original-url" type="text" placeholder="Вставьте длинный URL" />
+            <input id="custom-slug" type="text" placeholder="Кастомный slug (опц.)" />
+            <button id="btn-create" class="btn">Сократить</button>
         </div>
-        <p class="muted s">Нет аккаунта? <a href="#" id="link-open-register">Регистрация</a></p>
-        <p id="auth-error" class="error hidden"></p>
-    </form>
-</dialog>
-
-<dialog id="dlg-register">
-    <form method="dialog" id="form-register" class="dialog-card">
-        <h3>Регистрация</h3>
-        <input id="reg-email" type="email" placeholder="Email" required />
-        <input id="reg-pass" type="password" placeholder="Пароль" required />
-        <div class="row">
-            <button value="cancel" class="ghost">Отмена</button>
-            <button id="btn-do-register" value="register">Создать</button>
+        <div id="result" class="muted" style="margin-top:10px;display:none">
+            Короткая: <a id="result-link" target="_blank" rel="noopener"></a>
+            <button id="copy-btn" class="btn" style="margin-left:8px">Копировать</button>
         </div>
-        <p id="reg-error" class="error hidden"></p>
-    </form>
-</dialog>
+    </div>
 
-<script src="./assets/js/config.js"></script>
-<script src="./assets/js/ui.js"></script>
-<script src="./assets/js/api.js"></script>
-<script src="./assets/js/app.js"></script>
-<div id="modal-backdrop" class="backdrop hidden"></div>
+    <div class="card">
+        <h2>Мои ссылки <span id="links-count">0</span></h2>
+        <div id="links-empty" class="muted">Сейчас пусто</div>
+        <ul id="links-list"></ul>
+    </div>
+</div>
+
+<div id="toast"></div>
+<script src="assets/js/app.js"></script>
 </body>
 </html>

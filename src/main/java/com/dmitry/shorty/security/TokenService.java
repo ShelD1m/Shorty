@@ -4,6 +4,7 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,14 +61,26 @@ public class TokenService {
         }
     }
 
+
+
     public Optional<String> parseSubject(String token) {
         try {
             SignedJWT jwt = SignedJWT.parse(token);
+
+            // 1) Проверяем подпись
+            if (!jwt.verify(new MACVerifier(secret))) {
+                return Optional.empty();
+            }
+
+            // 2) Проверяем срок
             Date exp = jwt.getJWTClaimsSet().getExpirationTime();
             if (exp != null && exp.before(new Date())) return Optional.empty();
+
+            // 3) Отдаём subject
             return Optional.ofNullable(jwt.getJWTClaimsSet().getSubject());
         } catch (Exception e) {
             return Optional.empty();
         }
     }
+
 }

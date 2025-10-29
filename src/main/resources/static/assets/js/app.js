@@ -1,232 +1,108 @@
-'use strict';
+const API_BASE = ""; // если фронт от Spring Boot — оставь пусто
+const TOKEN_KEY = "shorty_token";
 
-(function () {
-    const $ = (s, r = document) => r.querySelector(s);
-    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const $ = (id) => document.getElementById(id);
+const el = {
+    logout: $("btn-logout"),
+    createBtn: $("btn-create"),
+    original: $("original-url"),
+    slug: $("custom-slug"),
+    result: $("result"),
+    resultLink: $("result-link"),
+    copy: $("copy-btn"),
+    list: $("links-list"),
+    empty: $("links-empty"),
+    count: $("links-count"),
+    toast: $("toast"),
+};
 
-    const longUrl      = $('#longUrl');
-    const alias        = $('#alias');
-    const formShorten  = $('#form-shorten');
-    const shortResult  = $('#shortResult');
+function toast(m){ if(!el.toast){console.log(m);return;}
+    el.toast.textContent=m; el.toast.style.opacity="1"; setTimeout(()=>el.toast.style.opacity="0",1800);
+}
+function token(){ return localStorage.getItem(TOKEN_KEY); }
+function setToken(t){ t?localStorage.setItem(TOKEN_KEY,t):localStorage.removeItem(TOKEN_KEY); }
+function ensureAuth(){ if(!token()) location.href="login.html"; }
+function normalizeUrl(u){ return /^https?:\/\//i.test(u)?u:`https://${u.trim()}`; }
+function buildShort(slug){ return `${API_BASE||window.location.origin}/r/${slug}`; }
 
-    const list         = $('#links-list');
-    const empty        = $('#links-empty');
-    const linksCount   = $('#links-count');
+async function api(path, {method="GET", body, headers={}} = {}){
+    const url = `${API_BASE||window.location.origin}${path}`;
+    const h = {"Content-Type":"application/json", ...headers};
+    if(token()) h.Authorization=`Bearer ${token()}`;
+    const res = await fetch(url, {method, headers:h, body: body?JSON.stringify(body):undefined, credentials:"include"});
+    const text = await res.text(); let data=null; try{data=text?JSON.parse(text):null;}catch{data=text;}
+    if(!res.ok) throw new Error((data&&data.error)||data||`HTTP ${res.status}`);
+    return data;
+}
 
-    const btnLogin     = $('#btn-login');
-    const btnLogout    = $('#btn-logout');
-
-    const dlgLogin     = $('#dlg-login');
-    const dlgRegister  = $('#dlg-register');
-    const backdrop     = $('#modal-backdrop');
-
-    const linkOpenRegister = $('#link-open-register');
-
-    const formLogin    = $('#form-login');
-    const formRegister = $('#form-register');
-    const loginEmail   = $('#login-email');
-    const loginPass    = $('#login-pass');
-    const regEmail     = $('#reg-email');
-    const regPass      = $('#reg-pass');
-    const authError    = $('#auth-error');
-    const regError     = $('#reg-error');
-
-    const USE_AUTH = !!(window.__CONFIG__ && window.__CONFIG__.USE_AUTH);
-    const API_BASE = (window.__CONFIG__ && window.__CONFIG__.API_BASE) || '';
-
-    function setAuthUI() {
-        const token = localStorage.getItem('shorty_token');
-        if (btnLogin)  btnLogin.classList.toggle('hidden', !!token);
-        if (btnLogout) btnLogout.classList.toggle('hidden', !token);
+async function loadLinks(){
+    try{
+        const items = await api("/api/links/me");
+        render(items||[]);
+    }catch(e){
+        if(e.message.includes("401")) location.href="login.html";
+        render([]);
     }
+}
+function render(items){
+    el.list.innerHTML="";
+    el.count.textContent=items.length;
+    el.empty.style.display = items.length? "none":"block";
+    items.forEach(it=>{
+        const li=document.createElement("li"); li.className="item";
 
-    function openDialog(dlg) {
-        if (!dlg) return;
-        if (typeof dlg.showModal === 'function') dlg.showModal();
-        else { dlg.setAttribute('open', ''); backdrop && backdrop.classList.remove('hidden'); }
-    }
+        const colShort=document.createElement("div"); colShort.className="short";
+        const a=document.createElement("a"); a.href=buildShort(it.slug); a.target="_blank"; a.rel="noopener"; a.textContent=a.href;
+        a.addEventListener("click",()=>setTimeout(()=>loadLinks(),1200));
+        colShort.append(a);
 
-    function closeDialog(dlg) {
-        if (!dlg) return;
-        if (typeof dlg.close === 'function') dlg.close();
-        else { dlg.removeAttribute('open'); backdrop && backdrop.classList.add('hidden'); }
-    }
+        const colTarget=document.createElement("div"); colTarget.className="target";
+        colTarget.textContent=it.targetUrl;
 
-    function copyToClipboard(text) {
-        if (navigator.clipboard?.writeText) {
-            navigator.clipboard.writeText(text)
-                .then(() => shortResult && (shortResult.textContent = 'Скопировано: ' + text))
-                .catch(() => shortResult && (shortResult.textContent = 'Не удалось скопировать'));
-            return;
-        }
-        // fallback
-        const ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); shortResult && (shortResult.textContent = 'Скопировано: ' + text); }
-        catch { shortResult && (shortResult.textContent = 'Не удалось скопировать'); }
-        document.body.removeChild(ta);
-    }
+        const colClicks=document.createElement("div"); colClicks.className="clicks";
+        // БЫЛО: it.clicks — НУЖНО: it.clicksCount
+        colClicks.textContent = typeof it.clicksCount === "number" ? `Переходов: ${it.clicksCount}` : "";
 
-    function renderLinks(items) {
-        if (!list) return;
-        list.innerHTML = '';
+        const colCopy=document.createElement("div"); colCopy.className="copy-right";
+        const btn=document.createElement("button"); btn.className="btn"; btn.textContent="Копировать";
+        btn.onclick=async()=>{ await navigator.clipboard.writeText(a.href); toast("Скопировано"); };
+        colCopy.append(btn);
 
-        const arr = Array.isArray(items) ? items : (items?.items || []);
-        if (arr.length === 0) {
-            empty && empty.classList.remove('hidden');
-            if (linksCount) linksCount.textContent = '(0)';
-            return;
-        }
-        empty && empty.classList.add('hidden');
-        if (linksCount) linksCount.textContent = `(${arr.length})`;
-
-        arr.forEach((it) => {
-            const li = document.createElement('li');
-
-            const shortUrl = it.shortUrl
-                ? (API_BASE.replace(/\/+$/, '') + it.shortUrl)
-                : (API_BASE.replace(/\/+$/, '') + '/r/' + (it.slug || it.id));
-
-            li.innerHTML =
-                '<div class="row">' +
-                '<strong><a target="_blank" href="' + shortUrl + '">' + shortUrl + '</a></strong>' +
-                '<button class="copy" data-copy="' + shortUrl + '">копировать</button>' +
-                '</div>' +
-                '<div class="muted">→ ' + (it.targetUrl || it.longUrl || '') + '</div>' +
-                '<div class="s muted">Кликов: ' + (it.clicksCount ?? 0) + '</div>';
-
-
-            list.appendChild(li);
-        });
-
-        $$('.copy', list).forEach((b) =>
-            b.addEventListener('click', (e) => copyToClipboard(e.currentTarget.getAttribute('data-copy')))
-        );
-    }
-
-    function applyItems(items) {
-        const arr = Array.isArray(items) ? items : (items?.items || []);
-        renderLinks(arr);
-        if (linksCount) linksCount.textContent = `(${arr.length})`;
-    }
-
-    const getDemo = () => JSON.parse(localStorage.getItem('shorty_demo_links') || '[]');
-    const setDemo = (arr)=> localStorage.setItem('shorty_demo_links', JSON.stringify(arr || []));
-    if (!USE_AUTH && !localStorage.getItem('shorty_demo_links')) setDemo([]);
-
-    function refreshLinks() {
-        return new Promise((resolve) => {
-            if (USE_AUTH) {
-                API.links.mine()
-                    .then((data) => { applyItems(data); resolve(); })
-                    .catch(()    => { applyItems([]);  resolve(); });
-            } else {
-                applyItems(getDemo());
-                resolve();
-            }
-        });
-    }
-
-    if (formShorten) {
-        formShorten.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const long = (longUrl?.value || '').trim();
-            const slug = (alias?.value || '').trim();
-            if (!long) return;
-
-            if (USE_AUTH) {
-                const payload = { targetUrl: long, customSlug: slug || null, expiresAt: null, maxClicks: null };
-                API.links.create(payload).then((created) => {
-                    const shortUrl = created.shortUrl
-                        ? (API_BASE.replace(/\/+$/, '') + created.shortUrl)
-                        : (API_BASE.replace(/\/+$/, '') + '/r/' + (created.slug || created.id));
-
-                    if (shortResult) shortResult.textContent = shortUrl;
-                    formShorten.reset();
-                    return refreshLinks();
-                }).catch((err) => {
-                    if (shortResult) shortResult.textContent = 'Ошибка: ' + (err?.message || 'запрос не удался');
-                });
-            } else {
-                const demo = getDemo();
-                const id = Math.random().toString(36).slice(2, 8);
-                const entry = { id, slug, targetUrl: long };
-                demo.unshift(entry); setDemo(demo);
-
-                const shortUrl = API_BASE.replace(/\/+$/, '') + '/' + (slug || id);
-                if (shortResult) shortResult.textContent = shortUrl;
-                formShorten.reset();
-                refreshLinks();
-            }
-        });
-    }
-
-    btnLogin?.addEventListener('click', () => openDialog(dlgLogin));
-
-    btnLogout?.addEventListener('click', () => {
-        localStorage.removeItem('shorty_token');
-        setAuthUI();
-        applyItems([]);
-        empty && empty.classList.remove('hidden');
+        li.append(colShort,colTarget,colClicks,colCopy);
+        el.list.append(li);
     });
+}
 
-    linkOpenRegister?.addEventListener('click', (e) => {
-        e.preventDefault();
-        closeDialog(dlgLogin);
-        openDialog(dlgRegister);
-    });
-
-    if (formLogin) {
-        formLogin.addEventListener('submit', (e) => {
-            e.preventDefault();
-            authError && authError.classList.add('hidden');
-
-            if (USE_AUTH) {
-                API.login(loginEmail.value, loginPass.value).then((res) => {
-                    const token = res?.token || res?.accessToken || res?.jwt || '';
-                    if (token) localStorage.setItem('shorty_token', token);
-                    setAuthUI();
-                    closeDialog(dlgLogin);
-                    return refreshLinks();
-                }).catch((err) => {
-                    if (authError) {
-                        authError.textContent = err?.message || 'Ошибка авторизации';
-                        authError.classList.remove('hidden');
-                    }
-                });
-            } else {
-                localStorage.setItem('shorty_token', 'demo-token');
-                setAuthUI();
-                closeDialog(dlgLogin);
-                refreshLinks();
-            }
+async function createLink(){
+    const url = normalizeUrl(el.original.value||"");
+    const slug = (el.slug.value||"").trim() || null;
+    if(!url){ toast("Укажите URL"); return; }
+    try{
+        // ИМЕНА ПОЛЕЙ ВАЖНЫ!
+        const created = await api("/api/links", {
+            method:"POST",
+            body: { targetUrl: url, customSlug: slug, expiresAt: null, maxClicks: null }
         });
-    }
+        const full = buildShort(created.slug);
+        el.result.style.display="block";
+        el.resultLink.href=full; el.resultLink.textContent=full;
+        el.original.value=""; el.slug.value="";
+        toast("Ссылка создана");
+        await loadLinks();
+    }catch(e){ toast(e.message); }
+}
 
-    if (formRegister) {
-        formRegister.addEventListener('submit', (e) => {
-            e.preventDefault();
-            regError && regError.classList.add('hidden');
+function bind(){
+    el.logout.onclick=()=>{ setToken(null); location.href="login.html"; };
+    el.createBtn.onclick=createLink;
+    el.copy.onclick=async()=>{ if(!el.resultLink.href){toast("Нет ссылки");return;}
+        await navigator.clipboard.writeText(el.resultLink.href); toast("Скопировано"); };
+    document.addEventListener("visibilitychange",()=>{ if(!document.hidden) loadLinks(); });
+    setInterval(()=>loadLinks(),15000);
+}
 
-            if (USE_AUTH) {
-                API.register(regEmail.value, regPass.value).then(() => {
-                    closeDialog(dlgRegister);
-                    openDialog(dlgLogin);
-                }).catch((err) => {
-                    if (regError) {
-                        regError.textContent = err?.message || 'Ошибка регистрации';
-                        regError.classList.remove('hidden');
-                    }
-                });
-            } else {
-                closeDialog(dlgRegister);
-                openDialog(dlgLogin);
-            }
-        });
-    }
-
-    setAuthUI();
-    refreshLinks();
-    API.health?.().then((h) => console.log('Health:', h)).catch(() => {});
-
+(async function init(){
+    ensureAuth();
+    bind();
+    await loadLinks();
 })();
