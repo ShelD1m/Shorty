@@ -11,11 +11,11 @@
         h1{margin:0 0 16px 0}
         .card{background:#111827;border-radius:16px;padding:20px 20px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
         .row{display:grid;grid-template-columns:1fr;gap:12px}
-        input{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#0b1220;color:#e5e7eb}
-        .btn{background:#22c55e;color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+        input{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#e6f0ff;color:#0b1220}
+        .btn{background:#22c55e;color:#052e16;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
         .muted{color:#94a3b8}
         a{color:#60a5fa}
-        #toast{position:fixed;right:16px;bottom:16px;background:#22c55e;color:#fff;padding:8px 14px;border-radius:10px;opacity:0;transition:.25s}
+        #toast{position:fixed;right:16px;bottom:16px;background:#22c55e;color:#052e16;padding:8px 14px;border-radius:10px;opacity:0;transition:.25s}
     </style>
 </head>
 <body>
@@ -23,14 +23,30 @@
     <h1>Регистрация</h1>
     <div class="card">
         <div class="row">
-            <input id="register-email" type="email" placeholder="Email" />
-            <input id="register-password" type="password" placeholder="Пароль" />
+            <input id="register-email" type="email" placeholder="E-mail" autocomplete="email" required />
+            <input id="register-password" type="password" placeholder="Пароль (мин. 6 символов)" autocomplete="new-password" required />
+            <!-- Запрошенное дополнительное поле подтверждения пароля -->
+            <input id="register-password2" type="password" placeholder="Подтверждение пароля" autocomplete="new-password" required />
             <button id="btn-register" class="btn">Создать аккаунт</button>
             <div class="muted">Уже есть аккаунт? <a href="login.html">Войти</a></div>
         </div>
     </div>
 </div>
+
 <div id="toast"></div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const p1 = document.getElementById('register-password');
+        const p2 = document.getElementById('register-password2');
+        const btn = document.getElementById('btn-register');
+        function validate() {
+            btn.disabled = !p1.value || !p2.value || p1.value !== p2.value || p1.value.length < 6;
+        }
+        p1.addEventListener('input', validate);
+        p2.addEventListener('input', validate);
+        validate();
+    });
+</script>
 <script src="assets/js/register.js"></script>
 </body>
 </html>

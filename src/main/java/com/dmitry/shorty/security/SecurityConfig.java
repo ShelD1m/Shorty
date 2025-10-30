@@ -30,30 +30,22 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                         .requestMatchers(
                                 "/",
-                                "/index.html", "/login.html", "/register.html",
-                                "/assets/**", "/favicon.ico",
-                                "/r/**",
-                                "/actuator/health",
-                                "/api/auth/**",
-                                "/error"
+                                "/index.html","/login.html","/register.html",
+                                "/forgot-password.html","/reset-password.html","/verify-email.html",
+                                "/assets/**","/favicon.ico",
+                                "/r/**","/actuator/health","/error",
+                                "/api/auth/login","/api/auth/register",
+                                "/api/auth/password/forgot","/api/auth/password/reset",
+                                "/api/auth/verify/request","/api/auth/verify/confirm"
                         ).permitAll()
-
                         .anyRequest().authenticated()
                 )
-
                 .exceptionHandling(e -> e
-                        .authenticationEntryPoint((req, res, ex) -> {
-                            res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-                        })
-                        .accessDeniedHandler((req, res, ex) -> {
-                            ex.printStackTrace();
-                            res.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied");
-                        })
+                        .authenticationEntryPoint((req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"))
+                        .accessDeniedHandler((req, res, ex) -> { ex.printStackTrace(); res.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied"); })
                 )
-
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -62,20 +54,11 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration cfg = new CorsConfiguration();
-
-        cfg.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*",
-                "http://host.docker.internal:*",
-                "http://*.local:*"
-        ));
-
+        cfg.setAllowedOriginPatterns(List.of("http://localhost:*","http://127.0.0.1:*","http://host.docker.internal:*","http://*.local:*"));
         cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-
-        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
+        cfg.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With"));
         cfg.setExposedHeaders(List.of("Authorization"));
         cfg.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return new CorsFilter(source);

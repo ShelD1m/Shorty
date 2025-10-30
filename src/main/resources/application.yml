@@ -8,15 +8,34 @@ spring:
     hibernate:
       ddl-auto: validate
     properties:
-      hibernate.jdbc.batch_size: 100
+      hibernate:
+        jdbc:
+          batch_size: 100
     show-sql: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     locations: classpath:db/migration
     enabled: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: sheldim1991@gmail.com
+    password: "ufwcjrjfinanfaei"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 8080
+
+mail:
+  from: "Shorty <sheldim1991@gmail.com>"
+
+app:
+  public-url: http://localhost:8080
 
 jwt:
   secret: "7x!A%D*G-KaPdSgVkYp3s6v9y$B?E(H+MbQeThWmZq4t7w!z%C*F-J@NcRfUjXn2r"
