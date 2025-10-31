@@ -1,4 +1,4 @@
-const API_BASE = ""; // если фронт от Spring Boot — оставь пусто
+const API_BASE = "";
 const TOKEN_KEY = "shorty_token";
 
 const $ = (id) => document.getElementById(id);

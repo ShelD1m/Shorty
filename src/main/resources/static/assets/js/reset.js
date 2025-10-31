@@ -1,4 +1,3 @@
-// ===== reset.js =====
 const API_BASE = "";
 const $ = (id)=>document.getElementById(id);
 const el = { p1:$("rp-pass1"), p2:$("rp-pass2"), btn:$("rp-apply"), msg:$("rp-msg"), toast:$("toast") };

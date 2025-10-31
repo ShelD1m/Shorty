@@ -1,4 +1,4 @@
-// ===== Register.js =====
+
 const API_BASE = "";
 
 const $ = (id) => document.getElementById(id);

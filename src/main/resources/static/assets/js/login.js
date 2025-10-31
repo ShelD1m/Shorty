@@ -1,5 +1,3 @@
-// ===== Login.js (корректный редирект после входа) =====
-
 const TOKEN_KEY = "shorty_token";
 const $ = (id) => document.getElementById(id);
 const el = {
