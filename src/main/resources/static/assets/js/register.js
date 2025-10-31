@@ -1,4 +1,5 @@
-const API_BASE = ""; // если фронт обслуживает Spring Boot — оставь пусто
+// ===== Register.js =====
+const API_BASE = "";
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -26,9 +27,7 @@ async function api(path, { method = "GET", body, headers = {} } = {}) {
     const txt = await res.text();
     let data = null;
     try { data = txt ? JSON.parse(txt) : null; } catch { data = txt; }
-    if (!res.ok) {
-        throw new Error((data && data.error) || data || `HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error((data && data.error) || data || `HTTP ${res.status}`);
     return data;
 }
 
@@ -36,31 +35,18 @@ async function onRegister() {
     const email = (el.email.value || "").trim();
     const password = el.pass.value || "";
 
-    if (!email || !password) {
-        toast("Введите email и пароль");
-        return;
-    }
-    if (password.length < 6) {
-        toast("Минимум 6 символов в пароле");
-        return;
-    }
+    if (!email || !password) { toast("Введите email и пароль"); return; }
+    if (password.length < 6) { toast("Минимум 6 символов в пароле"); return; }
 
     try {
-        await api("/api/auth/register", {
-            method: "POST",
-            body: { email, password },
-        });
+        await api("/api/auth/register", { method: "POST", body: { email, password } });
         location.href = "verify-email.html?email=" + encodeURIComponent(email);
     } catch (e) {
         toast(String(e.message || "Ошибка регистрации"));
     }
 }
 
-function bind() {
+(function init() {
     el.btn.addEventListener("click", onRegister);
-    el.pass.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") onRegister();
-    });
-}
-
-(function init() { bind(); })();
+    el.pass.addEventListener("keydown", (e) => { if (e.key === "Enter") onRegister(); });
+})();

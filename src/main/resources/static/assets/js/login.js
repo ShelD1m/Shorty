@@ -1,3 +1,5 @@
+// ===== Login.js (корректный редирект после входа) =====
+
 const TOKEN_KEY = "shorty_token";
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -39,7 +41,6 @@ async function onLogin(e){
         const { ok, status, data } = await apiLogin(email, password);
 
         if(ok){
-            // ✅ успешный логин
             const token = data?.accessToken || data?.token;
             if(token) localStorage.setItem(TOKEN_KEY, token);
             location.href = "index.html";

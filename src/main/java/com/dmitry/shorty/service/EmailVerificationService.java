@@ -5,7 +5,6 @@ import com.dmitry.shorty.user.UserRepo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import com.dmitry.shorty.service.EmailService;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -15,7 +14,7 @@ import java.util.UUID;
 public class EmailVerificationService {
     private final UserRepo users;
     private final StringRedisTemplate redis;
-    private final com.dmitry.shorty.service.EmailService emailService;
+    private final EmailService emailService;
 
     @Value("${app.public-url:http://localhost:8080}")
     private String publicUrl;
@@ -55,7 +54,7 @@ public class EmailVerificationService {
     public boolean confirm(String token) {
         String userId = redis.opsForValue().get(key(token));
         if (userId == null) return false;
-        var opt = users.findById(Long.valueOf(userId));
+        Optional<User> opt = users.findById(Long.valueOf(userId));
         if (opt.isEmpty()) return false;
 
         User u = opt.get();

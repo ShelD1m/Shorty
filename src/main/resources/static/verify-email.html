@@ -9,7 +9,7 @@
         body{margin:0;background:#0f172a;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}
         .wrap{max-width:560px;margin:80px auto;padding:0 16px}
         h1{margin:0 0 16px 0}
-        .card{background:#111827;border-radius:16px;padding:20px 20px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+        .card{background:#111827;border-radius:16px;padding:20px 20px;box-shadow:0 8px 24px rgba(0,0,0,25)}
         .row{display:grid;grid-template-columns:1fr;gap:12px}
         input{width:100%;padding:12px 14px;border-radius:12px;border:0;background:#0b1220;color:#e5e7eb}
         .btn{background:#22c55e;color:#052e16;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
@@ -41,9 +41,7 @@
     </div>
 
     <div class="card" style="margin-top:16px">
-        <div class="muted">
-            Уже подтвердили? <a href="login.html">Войти</a>
-        </div>
+        <div class="muted">Уже подтвердили? <a href="login.html">Войти</a></div>
     </div>
 </div>
 
@@ -86,7 +84,6 @@
     const params = new URLSearchParams(location.search);
     const token = params.get("token");
     const prefillEmail = params.get("email");
-
     if (prefillEmail) el.email.value = prefillEmail;
 
     async function confirmByToken(){
@@ -121,9 +118,7 @@
     el.resendBtn.addEventListener("click", resend);
     el.btnLogin.addEventListener("click", ()=> location.href="login.html");
 
-    (async function init(){
-        await confirmByToken();
-    })();
+    (async function init(){ await confirmByToken(); })();
 </script>
 </body>
 </html>
