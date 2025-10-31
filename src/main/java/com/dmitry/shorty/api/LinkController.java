@@ -1,3 +1,4 @@
+// src/main/java/com/dmitry/shorty/api/LinkController.java
 package com.dmitry.shorty.api;
 
 import com.dmitry.shorty.api.dto.LinkDto.CreateLinkRequest;
@@ -6,6 +7,10 @@ import com.dmitry.shorty.link.Link;
 import com.dmitry.shorty.link.LinkRepo;
 import com.dmitry.shorty.service.ClicksCounterService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +33,7 @@ public class LinkController {
     @PostMapping
     public ResponseEntity<LinkResponse> create(@Valid @RequestBody CreateLinkRequest req, Principal principal) {
         Long userId = Long.valueOf(principal.getName());
+
         String slug = (req.customSlug() != null && !req.customSlug().isBlank())
                 ? req.customSlug().trim()
                 : genSlug();
@@ -57,13 +63,19 @@ public class LinkController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<LinkResponse>> myLinks(Principal principal) {
+    public ResponseEntity<Page<LinkResponse>> myLinks(
+            Principal principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
         Long userId = Long.valueOf(principal.getName());
-        var list = links.findAll().stream()
-                .filter(l -> l.getUserId().equals(userId))
-                .map(this::toDto)
-                .toList();
-        return ResponseEntity.ok(list);
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(100, size));
+
+        var pageLinks = links.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
+        List<LinkResponse> content = pageLinks.getContent().stream().map(this::toDto).toList();
+        Page<LinkResponse> result = new PageImpl<>(content, pageable, pageLinks.getTotalElements());
+
+        return ResponseEntity.ok(result);
     }
 
     private LinkResponse toDto(Link l) {
@@ -74,6 +86,7 @@ public class LinkController {
                 "/r/" + l.getSlug(),
                 l.getTargetUrl(),
                 l.getIsActive(),
+                l.getCreatedAt(),
                 l.getExpiresAt(),
                 l.getMaxClicks(),
                 clicks
@@ -82,7 +95,6 @@ public class LinkController {
 
     private static final String ALPH = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789";
     private final Random rnd = new Random();
-
     private String genSlug() {
         while (true) {
             StringBuilder sb = new StringBuilder();

@@ -3,69 +3,106 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Shorty — панель</title>
+    <title>Shorty — Мои ссылки</title>
     <link rel="stylesheet" href="assets/css/styles.css"/>
+    <style>
+        body { background:#0f172a; color:#e5e7eb; font-family: Inter,system-ui,sans-serif; margin:0; }
+        header, .container { max-width: 980px; margin: 0 auto; padding: 16px; }
+        .card { background:#111827; border-radius: 16px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+        .row { display:grid; grid-template-columns: 1fr auto; align-items:center; gap:12px; }
+        .table{ width:100%; border-collapse: collapse; }
+        .table th,.table td{ border-bottom:1px solid #1f2937; padding:8px 10px; font-size:14px; vertical-align: top; }
+        a.ghost{ background:transparent; border:1px solid #374151; color:#cbd5e1; padding:6px 10px; border-radius:10px; text-decoration:none; }
+        .muted{ color:#94a3b8; }
+        .short { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
 </head>
 <body>
-<header class="container">
-    <h1>Shorty — панель</h1>
-    <nav><a class="ghost" href="index.html">Главная</a> <button id="logout" class="ghost">Выйти</button></nav>
+<header>
+    <div class="row" style="grid-template-columns:auto 1fr auto;">
+        <h1 style="margin:0">Мои ссылки</h1>
+        <div></div>
+        <nav><a class="ghost" href="index.html">На главную</a></nav>
+    </div>
 </header>
 
 <main class="container">
     <div class="card">
-        <h2>Создать ссылку</h2>
         <div class="row">
-            <input id="targetUrl" type="url" placeholder="Длинный URL" required style="flex:3"/>
-            <input id="customSlug" type="text" placeholder="Slug (опц.)" style="flex:1"/>
-            <input id="maxClicks" type="number" min="1" placeholder="Ограничение кликов (опц.)" style="flex:1"/>
-            <button id="create" class="btn">Создать</button>
+            <div id="meta" class="muted">Загрузка…</div>
+            <div>
+                <button id="prev" class="ghost">«</button>
+                <span id="page" class="muted">1</span>
+                <button id="next" class="ghost">»</button>
+            </div>
         </div>
-        <div id="result" class="notice" style="margin-top:10px;"></div>
-    </div>
 
-    <div class="card">
-        <h3 style="margin-top:0;">Последняя созданная ссылка</h3>
-        <table class="table">
-            <thead><tr><th>Slug</th><th>Target</th><th>Переход</th><th>Кликов</th><th></th></tr></thead>
-            <tbody id="links"></tbody>
-        </table>
-        <p class="notice">Полный список — на главной.</p>
+        <div style="overflow:auto; margin-top:10px">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Короткая</th>
+                    <th>Цель</th>
+                    <th>Создана</th>
+                    <th>Активна</th>
+                    <th>Истекает</th>
+                    <th>Лимит</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+            </table>
+        </div>
     </div>
 </main>
 
-<script src="assets/js/config.js"></script>
-<script src="assets/js/ui.js"></script>
-<script src="assets/js/api.js"></script>
 <script>
-    if (!API.token()) location.href = 'index.html';
-    document.querySelector('#logout').onclick = ()=>{ API.clear(); location.href='index.html'; };
+    const TOKEN_KEY = "shorty_token";
+    function token() { return localStorage.getItem(TOKEN_KEY); }
+    let page = 0, size = 20;
 
-    const linksTbody = document.querySelector('#links');
-    function renderLink(l){
-        linksTbody.innerHTML = '<tr>' +
-            '<td><span class="kbd">'+ l.slug +'</span></td>' +
-            '<td style="max-width:420px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">'+ l.targetUrl +'</td>' +
-            '<td><a target="_blank" href="'+ API.base() + l.shortUrl +'">'+ l.shortUrl +'</a></td>' +
-            '<td>'+ (l.clicksCount ?? 0) +'</td>' +
-            '<td><a class="btn secondary" href="link.html?id='+l.id+'&slug='+l.slug+'">Статистика</a></td>' +
-            '</tr>';
+    async function load() {
+        const res = await fetch(`/api/links/me?page=${page}&size=${size}`, {
+            headers: { "Authorization": "Bearer " + token() }
+        });
+        const meta = document.querySelector("#meta");
+        const rows = document.querySelector("#rows");
+        const pageLabel = document.querySelector("#page");
 
+        if (!res.ok) { meta.textContent = `Ошибка ${res.status}`; return; }
+
+        const data = await res.json(); 
+        meta.textContent = `Всего: ${data.totalElements} • страниц: ${data.totalPages}`;
+        pageLabel.textContent = (page + 1);
+
+        rows.innerHTML = "";
+        for (const l of data.content) {
+            const slug = l.slug;
+            const shortUrl = `${location.origin}/r/${slug}`;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+        <td>${l.id}</td>
+        <td class="short"><a href="${shortUrl}" target="_blank">${shortUrl}</a></td>
+        <td>${escapeHtml(l.targetUrl || "")}</td>
+        <td>${l.createdAt ?? ""}</td>
+        <td>${l.isActive ?? ""}</td>
+        <td>${l.expiresAt ?? ""}</td>
+        <td>${l.maxClicks ?? ""}</td>
+        <td><a class="ghost" href="analytics.html?id=${l.id}">Подробнее</a></td>
+      `;
+            rows.appendChild(tr);
+        }
     }
 
-    document.querySelector('#create').onclick = async ()=> {
-        const payload = {
-            targetUrl: document.querySelector('#targetUrl').value,
-            customSlug: document.querySelector('#customSlug').value || null,
-            expiresAt: null,
-            maxClicks: document.querySelector('#maxClicks').value ? parseInt(document.querySelector('#maxClicks').value,10) : null
-        };
-        try {
-            const l = await API.links.create(payload);
-            document.querySelector('#result').textContent = 'Создано: ' + l.shortUrl;
-            renderLink(l);
-        } catch(e){ toast('Ошибка: ' + e.message); }
-    };
+    document.querySelector("#prev").onclick = () => { if (page > 0) { page--; load(); } };
+    document.querySelector("#next").onclick = () => { page++; load(); };
+
+    function escapeHtml(s){
+        return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    load();
 </script>
 </body>
 </html>

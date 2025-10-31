@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Shorty — Аналитика ссылки</title>
+    <link rel="stylesheet" href="assets/css/styles.css"/>
+    <style>
+        body{ background:#0f172a; color:#e5e7eb; font-family: Inter,system-ui,sans-serif; margin:0; }
+        header,.container{ max-width: 980px; margin: 0 auto; padding: 16px; }
+        .card{ background:#111827; border-radius: 16px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+        .table{ width:100%; border-collapse: collapse; }
+        .table th,.table td{ border-bottom:1px solid #1f2937; padding:8px 10px; font-size:14px; }
+        a.ghost{ background:transparent; border:1px solid #374151; color:#cbd5e1; padding:6px 10px; border-radius:10px; text-decoration:none; }
+        .row{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+        .muted{ color:#94a3b8; }
+    </style>
+</head>
+<body>
+<header class="container">
+    <div class="row">
+        <h1 style="margin:0">Аналитика</h1>
+        <a class="ghost" href="dashboard.html">Назад</a>
+    </div>
+</header>
+
+<main class="container">
+    <div class="card">
+        <div class="row">
+            <div id="meta" class="muted">Загрузка…</div>
+            <div>
+                <button id="prev" class="ghost">«</button>
+                <span id="page" class="muted">1</span>
+                <button id="next" class="ghost">»</button>
+            </div>
+        </div>
+        <div style="overflow:auto">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Время (UTC)</th><th>IP</th><th>Страна</th><th>Город</th>
+                    <th>Устройство</th><th>OS</th><th>Браузер</th><th>Источник</th><th>Язык</th>
+                </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const TOKEN_KEY = "shorty_token";
+    function token(){ return localStorage.getItem(TOKEN_KEY); }
+    let page = 0, size = 20;
+
+    async function load(){
+        if(!id){ document.querySelector('#meta').textContent = 'Не указан id'; return; }
+        const res = await fetch(`/api/links/${id}/clicks?page=${page}&size=${size}`, {
+            headers: { "Authorization": "Bearer " + token() }
+        });
+        const meta = document.querySelector('#meta');
+        const rows = document.querySelector('#rows');
+        const pageLabel = document.querySelector("#page");
+
+        if(!res.ok){ meta.textContent = 'Ошибка ' + res.status; return; }
+
+        const data = await res.json(); // Spring Page
+        meta.textContent = `Всего записей: ${data.totalElements} • страниц: ${data.totalPages}`;
+        pageLabel.textContent = (page+1);
+
+        rows.innerHTML = "";
+        for(const x of data.content){
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                `<td>${x.ts ?? ""}</td>
+         <td>${x.ip ?? ""}</td>
+         <td>${x.country ?? ""}</td>
+         <td>${x.city ?? ""}</td>
+         <td>${x.deviceType ?? ""}</td>
+         <td>${x.os ?? ""}</td>
+         <td>${x.browser ?? ""}</td>
+         <td>${x.referer ?? ""}</td>
+         <td>${x.acceptLang ?? ""}</td>`;
+            rows.appendChild(tr);
+        }
+    }
+    document.querySelector('#prev').onclick = ()=>{ if(page>0){ page--; load(); } };
+    document.querySelector('#next').onclick = ()=>{ page++; load(); };
+    load();
+</script>
+</body>
+</html>
